@@ -16,6 +16,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        let defaults = UserDefaults.standard
+        let isPreloaded = defaults.bool(forKey: "isPreloaded")
+        if !isPreloaded {
+            preloadData()
+            defaults.set(true, forKey: "isPreloaded")
+        }
+        
         return true
     }
 
@@ -187,6 +195,9 @@ extension AppDelegate {
             }
        }
    }
+    
+    
+    
     //MARK: Remove Data
     func removeData() {
         //Remove the existing items
@@ -207,5 +218,8 @@ extension AppDelegate {
         }
     }
 
+
+
+    
 }
 
