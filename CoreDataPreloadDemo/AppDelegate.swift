@@ -17,12 +17,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         
-        let defaults = UserDefaults.standard
-        let isPreloaded = defaults.bool(forKey: "isPreloaded")
-        if !isPreloaded {
-            preloadData()
-            defaults.set(true, forKey: "isPreloaded")
-        }
+        preloadData()
+        
+//        let defaults = UserDefaults.standard
+//        let isPreloaded = defaults.bool(forKey: "isPreloaded")
+//        if !isPreloaded {
+//            preloadData()
+//            defaults.set(true, forKey: "isPreloaded")
+//        }
         
         return true
     }
@@ -168,16 +170,23 @@ extension AppDelegate {
     
     //MARK: Preloading data
     func preloadData() {
-        //Loading data file and if unable we just return
-        guard let contentsOfURL = Bundle.main.url(forResource: "menudata", withExtension: "csv") else {
+        
+        //Loading data from the remote uRL
+        
+        guard let remoteURL = URL(string: "https://drive.google.com/uc?export=download&id=0ByZhaKOAvtNGelJOMEdhRFo2c2B") else {
             return
         }
+        
+        //Loading data file and if unable we just return
+//        guard let contentsOfURL = Bundle.main.url(forResource: "menudata", withExtension: "csv") else {
+//            return
+//        }
         
         //Remove all the menu items before preloading
         removeData()
         
         //Parse the CSV file and import the data
-        if let items = parseCSV(contentsOfURL: contentsOfURL, encoding: String.Encoding.utf8) {
+        if let items = parseCSV(contentsOfURL: remoteURL, encoding: String.Encoding.utf8) {
         
             let context = persistentContainer.viewContext
             
