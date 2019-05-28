@@ -2,8 +2,7 @@
 //  AppDelegate.swift
 //  CoreDataPreloadDemo
 //
-//  Created by Simon Ng on 7/11/2016.
-//  Copyright © 2016 AppCoda. All rights reserved.
+//  Created by Makan Fofana
 //
 
 import UIKit
@@ -86,6 +85,125 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 let nserror = error as NSError
                 fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
             }
+        }
+    }
+
+}
+
+
+//Method for parsing CSV file
+
+extension AppDelegate {
+    
+    func parseCSV(contentsOfURL: URL, encoding: String.Encoding) -> [(name: String, detail: String, price: String)]? {
+        
+        //Load the CSV file and parse it
+        let delimeter = ","
+        var items: [(name: String, detail: String, price: String)]?
+        
+        do {
+            let content = try String(contentsOf: contentsOfURL, encoding: encoding)
+            
+            items = []
+            let lines: [String] = content.components(separatedBy: .newlines)
+            
+            for line in lines {
+                var values: [String] = []
+                if line != "" {
+                    //For a line with double quotes
+                    //we use NS Scanner to perfrom the parsing
+                    if line.range(of: "\"") != nil {
+                        var textToScan: String = line
+                        var value: NSString?
+                        var textScanner: Scanner = Scanner(string: textToScan)
+                        while textScanner.string != "" {
+                            
+                            if (textScanner.string as NSString).substring(to: 1) == "\"" {
+                            textScanner.scanLocation += 1
+                            textScanner.scanUpTo("\"", into: &value)
+                            textScanner.scanLocation += 1
+                            }
+                            else {
+                            textScanner.scanUpTo(delimeter, into: &value)
+                        }
+                            
+                        //Store the value into an array
+                            if let value = value {
+                                values.append(value as String)
+                            }
+                            //Retrieve the unscanned remainder of the string
+                            if textScanner.scanLocation < textScanner.string.count {
+                                textToScan = (textScanner.string as NSString).substring(from: textScanner.scanLocation + 1)
+                            } else {
+                                textToScan = ""
+                            }
+                            textScanner = Scanner(string: textToScan)
+                            
+                        }
+                }
+                else {
+                    values = line.components(separatedBy: delimeter)
+                    }
+                
+                    let item = (name: values[0], detail: values[1], price: values[2])
+                    
+                    items?.append(item)
+            }
+        }
+        } catch {
+            print(error)
+        }
+        return items
+  }
+    
+    
+    
+    //MARK: Preloading data
+    func preloadData() {
+        //Loading data file and if unable we just return
+        guard let contentsOfURL = Bundle.main.url(forResource: "menudata", withExtension: "csv") else {
+            return
+        }
+        
+        //Remove all the menu items before preloading
+        removeData()
+        
+        //Parse the CSV file and import the data
+        if let items = parseCSV(contentsOfURL: contentsOfURL, encoding: String.Encoding.utf8) {
+        
+            let context = persistentContainer.viewContext
+            
+            for item in items {
+                let menuItem = MenuItem(context: context)
+                menuItem.name = item.name
+                menuItem.detail = item.detail
+                menuItem.price = Double(item.price) ?? 0.0
+                
+                do {
+                    try context.save()
+                } catch {
+                    print(error)
+                }
+            }
+       }
+   }
+    //MARK: Remove Data
+    func removeData() {
+        //Remove the existing items
+        let fetchRequest = NSFetchRequest<MenuItem>(entityName: "MenuItem")
+        let context = persistentContainer.viewContext
+        
+        do {
+            let menuItems = try context.fetch(fetchRequest)
+            
+            for menuItem in menuItems {
+                context.delete(menuItem)
+            }
+            
+            saveContext()
+        }
+        catch {
+            print(error)
         }
     }
 
